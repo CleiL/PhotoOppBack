@@ -58,7 +58,10 @@ app.post('/upload', upload.single('foto'), async (req, res) => {
   }
 
   const imagePath = `/uploads/${req.file.filename}`;
-  const host = `${req.protocol}://${req.headers.host}`;
+  const host = process.env.NODE_ENV === 'production'
+  ? 'https://photoopp-backend.onrender.com'
+  : `${req.protocol}://${req.headers.host}`;
+
 
   try {
     const result = await db.query(
@@ -81,7 +84,10 @@ app.post('/upload', upload.single('foto'), async (req, res) => {
 // 📷 Busca imagem por ID
 app.get('/photo/:id', async (req, res) => {
   const { id } = req.params;
-  const host = `${req.protocol}://${req.headers.host}`;
+  const host = process.env.NODE_ENV === 'production'
+  ? 'https://photoopp-backend.onrender.com'
+  : `${req.protocol}://${req.headers.host}`;
+
 
   try {
     const result = await db.query('SELECT path FROM fotos WHERE id = $1', [id]);
@@ -120,7 +126,10 @@ app.get('/stats/daily', async (req, res) => {
 
 // 📚 Lista de todas as fotos
 app.get('/photos', async (req, res) => {
-  const host = `${req.protocol}://${req.headers.host}`;
+  const host = process.env.NODE_ENV === 'production'
+  ? 'https://photoopp-backend.onrender.com'
+  : `${req.protocol}://${req.headers.host}`;
+
 
   try {
     const result = await db.query(`
