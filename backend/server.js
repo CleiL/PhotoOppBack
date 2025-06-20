@@ -9,25 +9,27 @@ require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Middlewares
-app.use(cors());
+// 🔐 CORS liberado para o frontend publicado
+app.use(cors({
+  origin: ['https://photo-opp-front.vercel.app'],
+}));
 app.use(express.json());
 
-// Cria pasta uploads se não existir
+// 📁 Cria a pasta de uploads, se necessário
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 app.use('/uploads', express.static(uploadDir));
 
-// Configuração do multer
+// 📷 Configuração do multer
 const storage = multer.diskStorage({
   destination: uploadDir,
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
 });
 const upload = multer({ storage });
 
-// Configuração do banco de dados
+// 🛢️ Conexão com o banco de dados PostgreSQL
 const db = new Pool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -36,7 +38,7 @@ const db = new Pool({
   database: process.env.DB_NAME
 });
 
-// Criação da tabela, se não existir
+// 📄 Cria tabela se não existir
 db.query(`
   CREATE TABLE IF NOT EXISTS fotos (
     id SERIAL PRIMARY KEY,
@@ -46,13 +48,15 @@ db.query(`
 `).catch(err => console.error('Erro ao criar tabela:', err));
 
 
-// 🔄 Rota para upload
+// 🔄 Rota para upload de imagem
 app.post('/upload', upload.single('foto'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Arquivo não enviado' });
   }
 
   const imagePath = `/uploads/${req.file.filename}`;
+  const host = `${req.protocol}://${req.headers.host}`;
+
   try {
     const result = await db.query(
       'INSERT INTO fotos (path) VALUES ($1) RETURNING id',
@@ -62,7 +66,7 @@ app.post('/upload', upload.single('foto'), async (req, res) => {
 
     res.status(201).json({
       id,
-      imageUrl: `http://localhost:${port}${imagePath}`
+      imageUrl: `${host}${imagePath}`
     });
   } catch (err) {
     console.error('Erro ao salvar no banco:', err);
@@ -71,9 +75,10 @@ app.post('/upload', upload.single('foto'), async (req, res) => {
 });
 
 
-// ✅ Nova rota: busca imagem por ID
+// 📷 Busca imagem por ID
 app.get('/photo/:id', async (req, res) => {
   const { id } = req.params;
+  const host = `${req.protocol}://${req.headers.host}`;
 
   try {
     const result = await db.query('SELECT path FROM fotos WHERE id = $1', [id]);
@@ -82,7 +87,7 @@ app.get('/photo/:id', async (req, res) => {
       return res.status(404).json({ error: 'Imagem não encontrada' });
     }
 
-    const imageUrl = `http://localhost:${port}${result.rows[0].path}`;
+    const imageUrl = `${host}${result.rows[0].path}`;
     res.json({ imageUrl });
   } catch (err) {
     console.error('Erro ao buscar imagem:', err);
@@ -91,11 +96,7 @@ app.get('/photo/:id', async (req, res) => {
 });
 
 
-// Inicializa o servidor
-app.listen(port, () => {
-  console.log(`✅ Servidor rodando em http://localhost:${port}`);
-});
-
+// 📊 Estatísticas por dia
 app.get('/stats/daily', async (req, res) => {
   try {
     const result = await db.query(`
@@ -105,28 +106,40 @@ app.get('/stats/daily', async (req, res) => {
       FROM fotos
       GROUP BY dia
       ORDER BY dia DESC
-    `)
-    res.json(result.rows)
+    `);
+    res.json(result.rows);
   } catch (err) {
-    console.error('Erro ao buscar estatísticas:', err)
-    res.status(500).json({ error: 'Erro ao buscar estatísticas' })
+    console.error('Erro ao buscar estatísticas:', err);
+    res.status(500).json({ error: 'Erro ao buscar estatísticas' });
   }
-})
+});
 
+
+// 📚 Lista de todas as fotos
 app.get('/photos', async (req, res) => {
+  const host = `${req.protocol}://${req.headers.host}`;
+
   try {
     const result = await db.query(`
       SELECT id, path, TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') as criado_em
       FROM fotos
       ORDER BY created_at DESC
-    `)
+    `);
+
     const data = result.rows.map(row => ({
       ...row,
-      url: `http://localhost:${port}${row.path}`
-    }))
-    res.json(data)
+      url: `${host}${row.path}`
+    }));
+
+    res.json(data);
   } catch (err) {
-    console.error('Erro ao buscar fotos:', err)
-    res.status(500).json({ error: 'Erro ao buscar fotos' })
+    console.error('Erro ao buscar fotos:', err);
+    res.status(500).json({ error: 'Erro ao buscar fotos' });
   }
-})
+});
+
+
+// 🚀 Inicializa o servidor
+app.listen(port, () => {
+  console.log(`✅ Servidor rodando em http://localhost:${port}`);
+});
