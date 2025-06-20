@@ -150,6 +150,24 @@ app.get('/photos', async (req, res) => {
   }
 });
 
+app.delete('/photo/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await db.query('DELETE FROM fotos WHERE id = $1 RETURNING *', [id]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Foto não encontrada' });
+    }
+
+    res.status(200).json({ message: 'Foto excluída com sucesso' });
+  } catch (err) {
+    console.error('Erro ao excluir foto:', err);
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
+});
+
+
 
 // 🚀 Inicializa o servidor
 app.listen(port, () => {
