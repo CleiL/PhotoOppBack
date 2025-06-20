@@ -1,58 +1,81 @@
-# PhotoOpp - Frontend
+# PhotoOpp - Backend
 
-Este é o frontend do projeto **PhotoOpp**, uma aplicação interativa para captura e compartilhamento de fotos em eventos.
+Este é o backend da aplicação **PhotoOpp**, responsável por receber imagens, armazená-las, servir os arquivos, e fornecer estatísticas.
 
 ## 🔧 Tecnologias Utilizadas
 
-- [Next.js 14](https://nextjs.org/)
-- [TailwindCSS](https://tailwindcss.com/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [QRCode Generator](https://www.npmjs.com/package/qrcode.react)
+- Node.js + Express
+- PostgreSQL com `pg`
+- Multer para upload de arquivos
+- CORS configurado para frontend
+- dotenv para variáveis de ambiente
 
 ## 🚀 Funcionalidades
 
-- Captura de imagem via webcam
-- Upload da imagem para o backend
-- Exibição de QR Code para download da imagem
-- Tela de agradecimento após envio
-- Tela de visualização de todas as imagens (admin)
-- Integração com backend para estatísticas e fotos
+- Upload de imagens com armazenamento em disco
+- Associação de ID único para cada imagem
+- Servir imagens individualmente
+- Geração de estatísticas diárias
+- Listagem de imagens para visualização (admin)
 
 ## 📦 Instalação
 
 ```bash
-cd frontend
+cd backend
 npm install
 ```
 
-## ▶️ Execução em desenvolvimento
+## ▶️ Execução
 
 ```bash
-npm run dev
+npm start
 ```
 
-Acesse: [http://localhost:3000](http://localhost:3000)
+Servidor estará disponível em: [http://localhost:3001](http://localhost:3001)
 
 ## 🌐 Variáveis de Ambiente
 
-Crie um arquivo `.env.local` com a seguinte variável:
+Crie um arquivo `.env` com os dados do banco:
 
 ```
-NEXT_PUBLIC_API_URL=http://localhost:3001
+PORT=3001
+BASE_URL=http://localhost:3001
+
+DB_USER=seu_usuario
+DB_PASSWORD=sua_senha
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=photoopp_db
+DB_SSL=false
 ```
 
-> Altere para a URL do backend em produção se necessário.
+## 🧪 Endpoints
 
-## 📁 Estrutura de Diretórios
+| Método | Rota              | Descrição                         |
+|--------|-------------------|-----------------------------------|
+| POST   | `/upload`         | Faz upload da imagem              |
+| GET    | `/photo/:id`      | Retorna imagem por ID             |
+| GET    | `/photos`         | Lista todas as imagens            |
+| GET    | `/stats/daily`    | Retorna contagem diária de fotos |
 
-- `pages/` – Páginas da aplicação (index, view, admin, etc)
-- `components/` – Componentes reutilizáveis (Header, Footer, WebcamCapture)
-- `services/` – Funções que acessam a API do backend
-- `public/` – Arquivos públicos (favicon, imagens)
+## 🗂️ Estrutura
 
-## 🖼️ Captura de Imagem
+- `index.js` – Arquivo principal do servidor
+- `upload/` – Pasta onde as imagens são salvas
+- `database.js` – Conexão com PostgreSQL
+- `models/` – Scripts SQL e helpers de banco
 
-A captura é feita com `Webcam` e convertida para Base64, enviada para a rota `/upload`.
+## 🗃️ Banco de Dados
+
+Tabela `photos` com os campos:
+
+```sql
+CREATE TABLE photos (
+  id UUID PRIMARY KEY,
+  filename TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
 
 ## 📄 Licença
 
