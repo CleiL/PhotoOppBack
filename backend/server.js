@@ -12,7 +12,10 @@ const port = process.env.PORT || 3001;
 // 🔐 CORS liberado para o frontend publicado
 app.use(cors({
   origin: 'https://photo-opp-front.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type'],
 }));
+
 app.use(express.json());
 
 // 📁 Cria a pasta de uploads, se necessário
